@@ -1,0 +1,11 @@
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$id$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$mipmap$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\MainActivity$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$integer$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$layout$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\com\android\tools\fd\runtime\AppPatchesLoaderImpl.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$styleable$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$string$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$menu$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\R$style$override.class
+CHANGED,C:\Users\ataeschner\AndroidStudioProjects\AktieHQ\app\build\intermediates\transforms\instantRun\debug\folders\4000\5\enhanced\de\programmierenlernenhq\aktiehq\AktienlisteFragment$override.class
