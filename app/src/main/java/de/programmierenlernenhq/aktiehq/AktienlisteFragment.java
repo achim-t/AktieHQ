@@ -1,5 +1,6 @@
 package de.programmierenlernenhq.aktiehq;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -13,12 +14,31 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 public class AktienlisteFragment extends Fragment{
 
+    ArrayAdapter<String> mAktienlisteAdapter;
     public AktienlisteFragment() {
     }
 
@@ -55,7 +75,7 @@ public class AktienlisteFragment extends Fragment{
         };
         List<String> aktienListe = new ArrayList<>(Arrays.asList(aktienlisteArray));
 
-        ArrayAdapter <String> aktienlisteAdapter =
+        mAktienlisteAdapter =
                 new ArrayAdapter<>(
                         getActivity(),
                         R.layout.list_item_aktienliste,
@@ -65,7 +85,7 @@ public class AktienlisteFragment extends Fragment{
         View rootView = inflater.inflate(R.layout.fragment_aktienliste, container, false);
 
         ListView aktienlisteListView = (ListView) rootView.findViewById(R.id.listview_aktienliste);
-        aktienlisteListView.setAdapter(aktienlisteAdapter);
+        aktienlisteListView.setAdapter(mAktienlisteAdapter);
 
 
         return rootView;
@@ -87,9 +107,162 @@ public class AktienlisteFragment extends Fragment{
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_daten_aktualisieren) {
-            Toast.makeText(getActivity(), "Aktualisieren gedrückt!", Toast.LENGTH_LONG).show();
+
+            HoleDatenTask holeDatenTask = new HoleDatenTask();
+            holeDatenTask.execute("Aktie");
+
+            Toast.makeText(getActivity(), "Aktiendaten werden abgefragt!", Toast.LENGTH_SHORT).show();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
+
+
+    public class HoleDatenTask extends AsyncTask<String, Integer, String[]>{
+
+        private final String LOG_TAG = HoleDatenTask.class.getSimpleName();
+
+        @Override
+        protected void onPostExecute(String[] strings) {
+            if (strings != null) {
+                mAktienlisteAdapter.clear();
+                for (String aktienString : strings) {
+                    mAktienlisteAdapter.add(aktienString);
+                }
+            }
+
+            Toast.makeText(getActivity(), "Aktiendaten vollständig geladen", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            Toast.makeText(getActivity(),values[0] + " von " + values[1] + " geladen", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected String[] doInBackground(String... strings) {
+            if (strings.length == 0) {
+                return null;
+            }
+
+            final String URL_PARAMETER = "https://query.yahooapis.com/v1/public/yql";
+            final String SELECTOR = "select%20*%20from%20csv%20where%20";
+            final String DOWNLOAD_URL = "http://download.finance.yahoo.com/d/quotes.csv";
+            final String DIAGNOSTICS = "'&diagnostics=true";
+
+            String symbols = "BMW.DE,DAI.DE,^GDAXI";
+            symbols = symbols.replace("^","%255E");
+            String parameters = "snc4xl1d1t1c1p2ohgv";
+            String columns = "symbol,name,currency,exchange,price,date,time," +
+                    "change,percent,open,high,low,volume";
+
+            String anfrageString = URL_PARAMETER;
+            anfrageString += "?q=" + SELECTOR;
+            anfrageString += "url='" + DOWNLOAD_URL;
+            anfrageString += "?s=" + symbols;
+            anfrageString += "%26f=" + parameters;
+            anfrageString += "%26e=.csv'%20and%20columns='" + columns;
+            anfrageString += DIAGNOSTICS;
+
+            Log.v(LOG_TAG, "Zusammengesetzter Anfrage-String: " + anfrageString);
+
+            HttpURLConnection httpURLConnection = null;
+            BufferedReader bufferedReader = null;
+
+            String aktiendatenXmlString = "";
+
+            try {
+                URL url = new URL(anfrageString);
+
+                httpURLConnection = (HttpURLConnection) url.openConnection();
+
+                InputStream inputStream = httpURLConnection.getInputStream();
+
+                if (inputStream == null) {
+                    return null;
+                }
+
+                bufferedReader = new BufferedReader((new InputStreamReader(inputStream)));
+                String line;
+
+                while ((line = bufferedReader.readLine()) != null) {
+                    aktiendatenXmlString += line + "\n";
+                }
+                if (aktiendatenXmlString.length() == 0) {
+                    return null;
+                }
+                Log.v(LOG_TAG, "Aktiendaten XML-String: " + aktiendatenXmlString);
+                publishProgress(1,1);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error ",e);
+                return null;
+            } finally {
+                if (httpURLConnection != null) {
+                    httpURLConnection.disconnect();
+                }
+                if (bufferedReader != null) {
+                    try {
+                        bufferedReader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+
+
+
+            return leseXmlAktiendatenAus(aktiendatenXmlString);
+        }
+        private String[] leseXmlAktiendatenAus(String xmlString) {
+            Document doc;
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            try {
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                InputSource is = new InputSource();
+                is.setCharacterStream((new StringReader(xmlString)));
+                doc = db.parse(is);
+            } catch (ParserConfigurationException e) {
+                Log.e(LOG_TAG, "Error: " + e.getMessage());
+                return null;
+            } catch (SAXException e) {
+                Log.e(LOG_TAG, "Error: " + e.getMessage());
+                return null;
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error: " + e.getMessage());
+                return null;
+            }
+
+            Element xmlAktiendaten = doc.getDocumentElement();
+            NodeList aktienListe = xmlAktiendaten.getElementsByTagName("row");
+
+            int anzahlAktien = aktienListe.getLength();
+            int anzahlAktienParameter = aktienListe.item(0).getChildNodes().getLength();
+
+            String[] ausgabeArray = new String[anzahlAktien];
+            String[][] alleAktienDatenArray = new String[anzahlAktien][anzahlAktienParameter];
+
+            Node aktienParameter;
+            String aktienParameterWert;
+            for (int i=0; i<anzahlAktien; i++) {
+                NodeList aktienParameterListe = aktienListe.item(i).getChildNodes();
+
+                for (int j=0; j<anzahlAktienParameter; j++) {
+                    aktienParameter = aktienParameterListe.item(j);
+                    aktienParameterWert = aktienParameter.getFirstChild().getNodeValue();
+                    alleAktienDatenArray[i][j] = aktienParameterWert;
+                }
+
+                ausgabeArray[i]  = alleAktienDatenArray[i][0];                // symbol
+                ausgabeArray[i] += ": " + alleAktienDatenArray[i][4];         // price
+                ausgabeArray[i] += " " + alleAktienDatenArray[i][2];          // currency
+                ausgabeArray[i] += " (" + alleAktienDatenArray[i][8] + ")";   // percent
+                ausgabeArray[i] += " - [" + alleAktienDatenArray[i][1] + "]"; // name
+
+                Log.v(LOG_TAG, "XML Output:" + ausgabeArray[i]);
+            }
+            return ausgabeArray;
+        }
+    }
+
+
 }
