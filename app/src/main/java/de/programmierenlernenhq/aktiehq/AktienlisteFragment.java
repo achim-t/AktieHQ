@@ -1,7 +1,10 @@
 package de.programmierenlernenhq.aktiehq;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +13,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -87,6 +91,17 @@ public class AktienlisteFragment extends Fragment{
         ListView aktienlisteListView = (ListView) rootView.findViewById(R.id.listview_aktienliste);
         aktienlisteListView.setAdapter(mAktienlisteAdapter);
 
+        aktienlisteListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String aktienInfo = (String) parent.getItemAtPosition(position);
+
+                Intent aktiendetailIntent = new Intent(getActivity(), AktiendetailActivity.class);
+                aktiendetailIntent.putExtra(Intent.EXTRA_TEXT, aktienInfo);
+                startActivity(aktiendetailIntent);
+            }
+        });
+
 
         return rootView;
 
@@ -109,8 +124,21 @@ public class AktienlisteFragment extends Fragment{
         if (id == R.id.action_daten_aktualisieren) {
 
             HoleDatenTask holeDatenTask = new HoleDatenTask();
-            holeDatenTask.execute("Aktie");
 
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String prefAktienlisteKey = getString(R.string.preference_aktienliste_key);
+            String prefAktienlisteDefault = getString(R.string.preference_aktienliste_default);
+            String aktienliste = sharedPreferences.getString(prefAktienlisteKey,prefAktienlisteDefault);
+
+            String prefIndizemodusKey = getString(R.string.preference_indizemodus_key);
+            Boolean indizemodus = sharedPreferences.getBoolean(prefIndizemodusKey, false);
+            if (indizemodus) {
+                String indizeliste = "^GDAXI,^TECDAX,^MDAXI,^SDAXI,^GSPC,^N255,^HSI,XAGUSD=X,XAUUSD=X";
+                holeDatenTask.execute(indizeliste);
+            }
+            else {
+                holeDatenTask.execute(aktienliste);
+            }
             Toast.makeText(getActivity(), "Aktiendaten werden abgefragt!", Toast.LENGTH_SHORT).show();
             return true;
         }
@@ -150,7 +178,7 @@ public class AktienlisteFragment extends Fragment{
             final String DOWNLOAD_URL = "http://download.finance.yahoo.com/d/quotes.csv";
             final String DIAGNOSTICS = "'&diagnostics=true";
 
-            String symbols = "BMW.DE,DAI.DE,^GDAXI";
+            String symbols = strings[0];
             symbols = symbols.replace("^","%255E");
             String parameters = "snc4xl1d1t1c1p2ohgv";
             String columns = "symbol,name,currency,exchange,price,date,time," +

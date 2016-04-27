@@ -18,6 +18,23 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".AktiendetailActivity"
+            android:label="@string/title_activity_aktiendetail"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.programmierenlernenhq.aktiehq.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".EinstellungenActivity"
+            android:label="@string/title_activity_einstellungen"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.programmierenlernenhq.aktiehq.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
